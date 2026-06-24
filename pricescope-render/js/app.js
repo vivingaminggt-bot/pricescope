@@ -104,6 +104,13 @@ function renderCompare() {
 
 // ── History Tab ──
 let histChartInst = null;
+const PLATFORM_COLORS = {
+  amazon:   { color: "#185FA5", dash: [] },
+  flipkart: { color: "#BA7517", dash: [5,3] },
+  meesho:   { color: "#A83279", dash: [2,2] },
+  croma:    { color: "#534AB7", dash: [6,2] },
+  jiomart:  { color: "#0F6E56", dash: [3,3] },
+};
 
 function renderHistory() {
   const filter = document.getElementById("hist-filter");
@@ -114,23 +121,68 @@ function renderHistory() {
   renderHistCards();
 }
 
-function renderHistChart(idx) {
+async function renderHistChart(idx) {
   const p = PRODUCTS[idx];
+  const canvas = document.getElementById("histChart");
+
+  // Try real backend history first (needs a backend-style id like "p1")
+  const liveHistory = p.id ? await loadLiveHistory(p.id) : null;
+
+  if (liveHistory && liveHistory.length) {
+    // Group by date -> platform -> price
+    const dates = [...new Set(liveHistory.map(h => h.date))].sort();
+    const platforms = [...new Set(liveHistory.map(h => h.platform))];
+
+    const datasets = platforms.map(platform => {
+      const style = PLATFORM_COLORS[platform.toLowerCase()] || { color: "#999", dash: [] };
+      const data = dates.map(d => {
+        const point = liveHistory.find(h => h.date === d && h.platform === platform);
+        return point ? point.price : null;
+      });
+      return {
+        label: platform,
+        data,
+        borderColor: style.color,
+        borderDash: style.dash,
+        tension: 0.4,
+        fill: false,
+        pointRadius: 2,
+      };
+    });
+
+    const labels = dates.map(d => new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short" }));
+
+    if (histChartInst) histChartInst.destroy();
+    histChartInst = new Chart(canvas, {
+      type: "line",
+      data: { labels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: true, position: "top", labels: { font: { size: 12 }, boxWidth: 12, boxHeight: 12 } } },
+        scales: {
+          y: { ticks: { callback: v => "₹" + Math.round(v / 1000) + "K" } },
+          x: { ticks: { maxRotation: 45, autoSkip: true, maxTicksLimit: 12 } }
+        }
+      }
+    });
+    return;
+  }
+
+  // Fallback: simulated 12-month curve if backend history unavailable
   const months = ["Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar","Apr","May","Jun"];
   const base = bestPrice(p);
-
-  // Simulate realistic 12-month price curve
-  const amazonData  = months.map((_, i) => Math.round(base * (0.95 + Math.sin(i * 0.8) * 0.07 + (i < 3 ? 0.06 : 0))));
-  const flipData    = months.map((_, i) => Math.round(base * (0.93 + Math.cos(i * 0.9) * 0.06 + (i > 9 ? -0.03 : 0))));
-  const bestData    = months.map((_, i) => Math.min(amazonData[i], flipData[i]) - Math.round(base * 0.01));
+  const amazonData = months.map((_, i) => Math.round(base * (0.95 + Math.sin(i * 0.8) * 0.07 + (i < 3 ? 0.06 : 0))));
+  const flipData   = months.map((_, i) => Math.round(base * (0.93 + Math.cos(i * 0.9) * 0.06 + (i > 9 ? -0.03 : 0))));
+  const bestData   = months.map((_, i) => Math.min(amazonData[i], flipData[i]) - Math.round(base * 0.01));
 
   if (histChartInst) histChartInst.destroy();
-  histChartInst = new Chart(document.getElementById("histChart"), {
+  histChartInst = new Chart(canvas, {
     type: "line",
     data: {
       labels: months,
       datasets: [
-        { label: "Amazon",    data: amazonData, borderColor: "#185FA5", tension: 0.4, fill: false, borderDash: [0],  pointRadius: 3 },
+        { label: "Amazon",    data: amazonData, borderColor: "#185FA5", tension: 0.4, fill: false, pointRadius: 3 },
         { label: "Flipkart",  data: flipData,   borderColor: "#BA7517", tension: 0.4, fill: false, borderDash: [5,3], pointRadius: 3 },
         { label: "Best price",data: bestData,   borderColor: "#0F6E56", tension: 0.4, fill: true, backgroundColor: "rgba(15,110,86,0.07)", borderWidth: 2, pointRadius: 4 }
       ]
@@ -153,14 +205,29 @@ function selectProdHist(btn, idx) {
   renderHistChart(idx);
 }
 
-function renderHistCards() {
-  const cards = [
-    { name: 'iPhone 15 Pro',       low: 79999,  high: 94999,  today: 84999,  ai: '₹82,000 predicted in 14 days', aiClass: 'purple' },
-    { name: 'Sony WH-1000XM5',    low: 19999,  high: 29990,  today: 22999,  ai: 'Stable at ₹22–23K', aiClass: 'purple' },
-    { name: 'Samsung 55" 4K TV',  low: 39999,  high: 62990,  today: 43500,  ai: '→ Buy now. Near 1-year low.', aiClass: 'green' },
-    { name: 'PS5 Console',         low: 49990,  high: 59990,  today: 54500,  ai: '↑ Rising. Act soon.', aiClass: 'red' },
-  ];
+async function renderHistCards() {
   const grid = document.getElementById("history-grid");
+  grid.innerHTML = `<div style="padding:20px;color:#999">Loading history summary...</div>`;
+
+  // Build summary cards for up to 4 products using real backend history
+  const subset = PRODUCTS.slice(0, 4);
+  const cards = await Promise.all(subset.map(async p => {
+    const history = p.id ? await loadLiveHistory(p.id) : null;
+    const best = bestPrice(p);
+
+    if (history && history.length) {
+      const prices = history.map(h => h.price);
+      const low = Math.min(...prices);
+      const high = Math.max(...prices);
+      let ai, aiClass;
+      if (best <= low * 1.05) { ai = "→ Buy now. Near 1-year low."; aiClass = "green"; }
+      else if (best >= high * 0.95) { ai = "↑ Rising. Act soon."; aiClass = "red"; }
+      else { ai = `Stable in the ₹${Math.round(low/1000)}–${Math.round(high/1000)}K range`; aiClass = "purple"; }
+      return { name: p.name, low, high, today: best, ai, aiClass };
+    }
+    return { name: p.name, low: Math.round(best * 0.85), high: Math.round(best * 1.3), today: best, ai: "Tracking price trend...", aiClass: "purple" };
+  }));
+
   grid.innerHTML = cards.map(c => `
     <div class="history-card">
       <div class="hcard-title">${c.name}</div>
