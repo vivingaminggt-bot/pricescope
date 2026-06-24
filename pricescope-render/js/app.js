@@ -207,16 +207,22 @@ function renderCloudCharts() {
 }
 
 // ── Alerts Tab ──
-function renderAlerts() {
-  const ALERTS = [
-    { icon:"🔥", bg:"#FAECE7", title:'Samsung 55" 4K TV hit a 6-month low',      sub:"₹43,500 on JioMart · 23% below average · AI confidence: 96%" },
-    { icon:"📉", bg:"#EAF3DE", title:"Sony WH-1000XM5 dropped ₹2,000 on Flipkart",sub:"₹22,999 → was ₹24,999 · Predicted to recover next week" },
-    { icon:"🔮", bg:"#EEEDFE", title:"iPhone 15 Pro sale predicted in 7 days",    sub:"AI detects pre-festival pattern · Likely to drop 5–8% on Amazon" },
-    { icon:"⚠️", bg:"#FAEEDA", title:"PS5 Console price rising across all platforms",sub:"Up ₹1,500 avg in last 3 days · Supply signal detected" },
-    { icon:"✅", bg:"#EAF3DE", title:"MacBook Air M3 price stable — good window",  sub:"₹114,900 on Amazon · No sale predicted for 30+ days" },
-    { icon:"🔔", bg:"#E6F1FB", title:"JBL Flip 6 all-time low on Flipkart",       sub:"₹7,999 · Never been lower · 33% below original price" }
-  ];
+const STATIC_ALERTS_FALLBACK = [
+  { icon:"🔥", bg:"#FAECE7", title:'Samsung 55" 4K TV hit a 6-month low',      sub:"₹43,500 on JioMart · 23% below average · AI confidence: 96%" },
+  { icon:"📉", bg:"#EAF3DE", title:"Sony WH-1000XM5 dropped ₹2,000 on Flipkart",sub:"₹22,999 → was ₹24,999 · Predicted to recover next week" },
+  { icon:"🔮", bg:"#EEEDFE", title:"iPhone 15 Pro sale predicted in 7 days",    sub:"AI detects pre-festival pattern · Likely to drop 5–8% on Amazon" },
+  { icon:"⚠️", bg:"#FAEEDA", title:"PS5 Console price rising across all platforms",sub:"Up ₹1,500 avg in last 3 days · Supply signal detected" },
+  { icon:"✅", bg:"#EAF3DE", title:"MacBook Air M3 price stable — good window",  sub:"₹114,900 on Amazon · No sale predicted for 30+ days" },
+  { icon:"🔔", bg:"#E6F1FB", title:"JBL Flip 6 all-time low on Flipkart",       sub:"₹7,999 · Never been lower · 33% below original price" }
+];
+
+async function renderAlerts() {
   const list = document.getElementById("alerts-list");
+  list.innerHTML = `<div style="padding:20px;color:#999">Loading live alerts...</div>`;
+
+  const liveAlerts = await loadLiveAlerts();
+  const ALERTS = liveAlerts && liveAlerts.length ? liveAlerts : STATIC_ALERTS_FALLBACK;
+
   list.innerHTML = ALERTS.map(a => `
     <div class="alert-item">
       <div class="alert-icon" style="background:${a.bg}">${a.icon}</div>
@@ -268,7 +274,12 @@ function updateTimestamp() {
 }
 
 // ── Init ──
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+  document.getElementById("product-grid").innerHTML =
+    `<div style="padding:20px;color:#999">Loading live prices...</div>`;
+
+  await loadLiveProducts(); // overwrites PRODUCTS with live API data if available
+
   renderProducts("all");
   setTimeout(renderTrendChart, 100);
   updateTimestamp();
