@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PriceScope — AI Price Intelligence</title>
+  <meta name="description" content="AI-powered e-commerce price comparison across Amazon, Flipkart, Meesho, Croma, JioMart. 10 products, 1 year of data, cloud-synced." />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<nav class="topbar">
+  <div class="topbar-inner">
+    <div class="logo">PriceScope <span class="logo-sub">AI Price Intelligence</span></div>
+    <div class="topbar-right">
+      <span class="live-dot"><span class="dot"></span>Live</span>
+      <span class="updated-text" id="last-updated">Updated just now</span>
+    </div>
+  </div>
+</nav>
+
+<main class="container">
+
+  <!-- Metrics -->
+  <div class="metrics">
+    <div class="metric"><div class="metric-label">Products tracked</div><div class="metric-val">10</div><div class="metric-sub">5 categories</div></div>
+    <div class="metric"><div class="metric-label">Avg savings found</div><div class="metric-val green">₹1,842</div><div class="metric-sub">vs highest price</div></div>
+    <div class="metric"><div class="metric-label">Scrape sources</div><div class="metric-val">5</div><div class="metric-sub">Amazon · Flipkart · Meesho · Croma · JioMart</div></div>
+    <div class="metric"><div class="metric-label">Data points</div><div class="metric-val">21,900</div><div class="metric-sub">365 days × 6/day × 10 products</div></div>
+  </div>
+
+  <!-- Tab Nav -->
+  <nav class="nav-tabs" role="tablist">
+    <button class="tab active" onclick="showTab('dashboard',this)" role="tab"><i class="ti ti-layout-dashboard"></i> Dashboard</button>
+    <button class="tab" onclick="showTab('products',this)" role="tab"><i class="ti ti-box"></i> Products</button>
+    <button class="tab" onclick="showTab('compare',this)" role="tab"><i class="ti ti-arrows-diff"></i> Compare</button>
+    <button class="tab" onclick="showTab('history',this)" role="tab"><i class="ti ti-chart-line"></i> Price History</button>
+    <button class="tab" onclick="showTab('cloud',this)" role="tab"><i class="ti ti-cloud"></i> Cloud & Storage</button>
+    <button class="tab" onclick="showTab('alerts',this)" role="tab"><i class="ti ti-bell"></i> AI Alerts</button>
+  </nav>
+
+  <!-- DASHBOARD -->
+  <div id="tab-dashboard" class="panel active" role="tabpanel">
+    <div class="ai-panel">
+      <h3><i class="ti ti-brain"></i> AI price intelligence — today's summary</h3>
+      <p class="ai-insight">Analyzing 10 products across 5 platforms... iPhone 15 Pro is at its 3-month low on Amazon (₹84,999). Sony WH-1000XM5 dropped 8% on Flipkart. Best overall deal today: <strong>Samsung 55" 4K TV on JioMart</strong> — 23% below average market price. Expect iPhone to rise ₹2–4K next week based on historical festival-eve pattern.</p>
+      <div class="ai-recs">
+        <div class="ai-rec"><div class="ai-rec-label"><i class="ti ti-bolt"></i> Buy now</div><div class="ai-rec-val">Samsung 55" TV</div><div class="ai-rec-note green">Lowest in 6 months</div></div>
+        <div class="ai-rec"><div class="ai-rec-label"><i class="ti ti-clock"></i> Wait 7 days</div><div class="ai-rec-val">iPhone 15 Pro</div><div class="ai-rec-note purple">Sale predicted</div></div>
+        <div class="ai-rec"><div class="ai-rec-label"><i class="ti ti-trending-up"></i> Price rising</div><div class="ai-rec-val">PS5 Console</div><div class="ai-rec-note red">Buy before surge</div></div>
+      </div>
+    </div>
+
+    <h2 class="section-title">Platform scraping status</h2>
+    <div class="scrape-status">
+      <div class="scrape-item"><div class="scrape-logo">Amazon</div><div class="scrape-info"><span class="dot dot-green"></span>Live · 3 min ago</div></div>
+      <div class="scrape-item"><div class="scrape-logo">Flipkart</div><div class="scrape-info"><span class="dot dot-green"></span>Live · 5 min ago</div></div>
+      <div class="scrape-item"><div class="scrape-logo">Meesho</div><div class="scrape-info"><span class="dot dot-green"></span>Live · 2 min ago</div></div>
+      <div class="scrape-item"><div class="scrape-logo">Croma</div><div class="scrape-info"><span class="dot dot-amber"></span>Delay · 18 min ago</div></div>
+      <div class="scrape-item"><div class="scrape-logo">JioMart</div><div class="scrape-info"><span class="dot dot-green"></span>Live · 4 min ago</div></div>
+    </div>
+
+    <h2 class="section-title">Price trend — all products (last 30 days)</h2>
+    <div class="chart-wrap" style="height:260px">
+      <canvas id="trendChart" role="img" aria-label="Line chart showing average and best prices over 30 days">30-day price trend across all products.</canvas>
+    </div>
+  </div>
+
+  <!-- PRODUCTS -->
+  <div id="tab-products" class="panel" role="tabpanel">
+    <div class="filter-row" id="prod-filters">
+      <button class="filter-btn active" onclick="filterProd(this,'all')">All</button>
+      <button class="filter-btn" onclick="filterProd(this,'electronics')">Electronics</button>
+      <button class="filter-btn" onclick="filterProd(this,'audio')">Audio</button>
+      <button class="filter-btn" onclick="filterProd(this,'gaming')">Gaming</button>
+      <button class="filter-btn" onclick="filterProd(this,'appliances')">Appliances</button>
+      <button class="filter-btn" onclick="filterProd(this,'wear')">Wearables</button>
+    </div>
+    <div class="product-grid" id="product-grid"></div>
+  </div>
+
+  <!-- COMPARE -->
+  <div id="tab-compare" class="panel" role="tabpanel">
+    <div class="sort-row">
+      <label for="sort-sel" style="font-size:13px;color:#666">Sort by:</label>
+      <select id="sort-sel" onchange="renderCompare()">
+        <option value="savings">Best savings</option>
+        <option value="price_asc">Price: low to high</option>
+        <option value="price_desc">Price: high to low</option>
+        <option value="name">Name A–Z</option>
+      </select>
+    </div>
+    <div class="table-scroll">
+      <table class="compare-table">
+        <thead><tr>
+          <th>Product</th><th>Amazon</th><th>Flipkart</th><th>Meesho</th><th>Croma</th><th>JioMart</th><th>Best price</th><th>You save</th><th>AI pick</th>
+        </tr></thead>
+        <tbody id="compare-body"></tbody>
+      </table>
+    </div>
+    <div class="ai-panel" style="margin-top:1.5rem">
+      <h3><i class="ti ti-sparkles"></i> AI comparison analysis</h3>
+      <p class="ai-insight">Across all 10 products, <strong>Amazon</strong> wins on 4 products, <strong>Flipkart</strong> on 3, and <strong>JioMart</strong> on 3. Average savings vs highest price: <strong>₹1,842</strong>. Biggest single deal: Samsung 55" 4K TV at ₹8,500 below next-best. AI confidence in pricing accuracy: 97.4%.</p>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div id="tab-history" class="panel" role="tabpanel">
+    <div class="filter-row" id="hist-filter"></div>
+    <div class="chart-wrap" style="height:280px">
+      <canvas id="histChart" role="img" aria-label="12-month price history for selected product">12-month price history across platforms.</canvas>
+    </div>
+    <div class="history-grid" id="history-grid"></div>
+  </div>
+
+  <!-- CLOUD -->
+  <div id="tab-cloud" class="panel" role="tabpanel">
+    <h2 class="section-title">Cloud storage architecture</h2>
+    <div class="cloud-panel">
+      <div class="cloud-row"><div><div class="cloud-label"><i class="ti ti-database"></i> Firebase Realtime DB</div><div class="cloud-desc">Live price feeds · auto-synced every 10 min</div></div><div class="cloud-right"><div class="cloud-val">21,900 records</div><div class="scrape-info"><span class="dot dot-green"></span>Connected</div></div></div>
+      <div class="cloud-row"><div><div class="cloud-label"><i class="ti ti-file-spreadsheet"></i> BigQuery (GCP)</div><div class="cloud-desc">Historical analytics · ML training data</div></div><div class="cloud-right"><div class="cloud-val">1.2 GB stored</div><div class="scrape-info"><span class="dot dot-green"></span>Active</div></div></div>
+      <div class="cloud-row"><div><div class="cloud-label"><i class="ti ti-photo"></i> Cloud Storage (GCS)</div><div class="cloud-desc">Product images · cached web assets</div></div><div class="cloud-right"><div class="cloud-val">240 MB</div><div class="scrape-info"><span class="dot dot-green"></span>Synced</div></div></div>
+      <div class="cloud-row"><div><div class="cloud-label"><i class="ti ti-brain"></i> Vertex AI / Claude API</div><div class="cloud-desc">Price prediction · anomaly detection · alerts</div></div><div class="cloud-right"><div class="cloud-val">AI-powered</div><div class="scrape-info"><span class="dot dot-green"></span>Running</div></div></div>
+      <div class="cloud-row" style="border:none"><div><div class="cloud-label"><i class="ti ti-robot"></i> Cloud Functions</div><div class="cloud-desc">Scraper scheduler · price diff alerts · API</div></div><div class="cloud-right"><div class="cloud-val">6× daily</div><div class="scrape-info"><span class="dot dot-green"></span>Scheduled</div></div></div>
+    </div>
+    <div class="cloud-charts">
+      <div class="cloud-chart-card"><h3 class="section-title" style="font-size:14px">Storage breakdown</h3><div class="chart-wrap" style="height:200px"><canvas id="storageChart" role="img" aria-label="Donut chart of cloud storage breakdown">Storage: price data 55%, images 20%, logs 15%, models 10%.</canvas></div></div>
+      <div class="cloud-chart-card"><h3 class="section-title" style="font-size:14px">Monthly ingestion</h3><div class="chart-wrap" style="height:200px"><canvas id="ingestChart" role="img" aria-label="Bar chart of monthly data ingestion">Monthly ingestion over 12 months.</canvas></div></div>
+    </div>
+  </div>
+
+  <!-- ALERTS -->
+  <div id="tab-alerts" class="panel" role="tabpanel">
+    <div class="ai-panel">
+      <h3><i class="ti ti-robot"></i> AI alert engine — active rules</h3>
+      <p class="ai-insight">Claude API analyzes price data every 10 minutes. Alerts fire when price drops &gt;5%, new historical lows are detected, or festival/sale patterns are predicted. <span class="purple">12 alerts sent this month.</span></p>
+    </div>
+    <div id="alerts-list"></div>
+  </div>
+
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
