@@ -24,10 +24,10 @@
 
   <!-- Metrics -->
   <div class="metrics">
-    <div class="metric"><div class="metric-label">Products tracked</div><div class="metric-val">10</div><div class="metric-sub">5 categories</div></div>
-    <div class="metric"><div class="metric-label">Avg savings found</div><div class="metric-val green">₹1,842</div><div class="metric-sub">vs highest price</div></div>
+    <div class="metric"><div class="metric-label">Products tracked</div><div class="metric-val" id="m-products">10</div><div class="metric-sub">5 categories</div></div>
+    <div class="metric"><div class="metric-label">Avg savings found</div><div class="metric-val green" id="m-savings">₹1,842</div><div class="metric-sub">vs highest price</div></div>
     <div class="metric"><div class="metric-label">Scrape sources</div><div class="metric-val">5</div><div class="metric-sub">Amazon · Flipkart · Meesho · Croma · JioMart</div></div>
-    <div class="metric"><div class="metric-label">Data points</div><div class="metric-val">21,900</div><div class="metric-sub">365 days × 6/day × 10 products</div></div>
+    <div class="metric"><div class="metric-label">Data points</div><div class="metric-val" id="m-datapoints">21,900</div><div class="metric-sub">365 days × 6/day × 10 products</div></div>
   </div>
 
   <!-- Tab Nav -->
@@ -44,8 +44,8 @@
   <div id="tab-dashboard" class="panel active" role="tabpanel">
     <div class="ai-panel">
       <h3><i class="ti ti-brain"></i> AI price intelligence — today's summary</h3>
-      <p class="ai-insight">Analyzing 10 products across 5 platforms... iPhone 15 Pro is at its 3-month low on Amazon (₹84,999). Sony WH-1000XM5 dropped 8% on Flipkart. Best overall deal today: <strong>Samsung 55" 4K TV on JioMart</strong> — 23% below average market price. Expect iPhone to rise ₹2–4K next week based on historical festival-eve pattern.</p>
-      <div class="ai-recs">
+      <p class="ai-insight" id="ai-summary-text">Analyzing 10 products across 5 platforms... iPhone 15 Pro is at its 3-month low on Amazon (₹84,999). Sony WH-1000XM5 dropped 8% on Flipkart. Best overall deal today: <strong>Samsung 55" 4K TV on JioMart</strong> — 23% below average market price. Expect iPhone to rise ₹2–4K next week based on historical festival-eve pattern.</p>
+      <div class="ai-recs" id="ai-recs">
         <div class="ai-rec"><div class="ai-rec-label"><i class="ti ti-bolt"></i> Buy now</div><div class="ai-rec-val">Samsung 55" TV</div><div class="ai-rec-note green">Lowest in 6 months</div></div>
         <div class="ai-rec"><div class="ai-rec-label"><i class="ti ti-clock"></i> Wait 7 days</div><div class="ai-rec-val">iPhone 15 Pro</div><div class="ai-rec-note purple">Sale predicted</div></div>
         <div class="ai-rec"><div class="ai-rec-label"><i class="ti ti-trending-up"></i> Price rising</div><div class="ai-rec-val">PS5 Console</div><div class="ai-rec-note red">Buy before surge</div></div>
@@ -53,7 +53,7 @@
     </div>
 
     <h2 class="section-title">Platform scraping status</h2>
-    <div class="scrape-status">
+    <div class="scrape-status" id="scrape-status">
       <div class="scrape-item"><div class="scrape-logo">Amazon</div><div class="scrape-info"><span class="dot dot-green"></span>Live · 3 min ago</div></div>
       <div class="scrape-item"><div class="scrape-logo">Flipkart</div><div class="scrape-info"><span class="dot dot-green"></span>Live · 5 min ago</div></div>
       <div class="scrape-item"><div class="scrape-logo">Meesho</div><div class="scrape-info"><span class="dot dot-green"></span>Live · 2 min ago</div></div>
