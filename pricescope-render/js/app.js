@@ -8,6 +8,7 @@ function showTab(name, btn) {
   if (btn) btn.classList.add("active");
 
   if (name === "dashboard") renderDashboardLive();
+  if (name === "owner")     renderOwnerAnalytics();
   if (name === "products") renderProducts("all");
   if (name === "compare")  renderCompare();
   if (name === "history")  renderHistory();
@@ -411,6 +412,101 @@ function renderTrendChart() {
 function updateTimestamp() {
   const el = document.getElementById("last-updated");
   if (el) el.textContent = "Updated " + new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+}
+
+// ── Owner Analytics Tab (internal-only) ──
+let ownerAnalyticsLoaded = false;
+
+function populateOwnerProductSelect() {
+  const sel = document.getElementById("owner-price-product");
+  if (!sel) return;
+  sel.innerHTML = PRODUCTS.map(p => `<option value="${p.id || ''}">${p.name}</option>`).join("");
+}
+
+async function checkOwnerPrice() {
+  const sel = document.getElementById("owner-price-product");
+  const input = document.getElementById("owner-price-input");
+  const resultBox = document.getElementById("owner-price-result");
+
+  const productId = sel.value;
+  const price = parseFloat(input.value);
+
+  if (!productId) {
+    resultBox.innerHTML = `<div style="color:#c0392b">No product id available — live data may not have loaded yet, try refreshing.</div>`;
+    return;
+  }
+  if (!price || price <= 0) {
+    resultBox.innerHTML = `<div style="color:#c0392b">Enter a valid price first.</div>`;
+    return;
+  }
+
+  resultBox.innerHTML = `<div style="color:#999">Analyzing...</div>`;
+  const result = await evaluateOwnerPrice(productId, price);
+
+  if (!result || result.error) {
+    resultBox.innerHTML = `<div style="color:#c0392b">Could not evaluate — backend may be waking up, try again in a moment.</div>`;
+    return;
+  }
+
+  const verdictColor = {
+    below_seasonal_norm: "#0F6E56",
+    competitive: "#0F6E56",
+    in_line: "#534AB7",
+    above_norm: "#B36B17",
+    overpriced: "#B33636",
+  }[result.verdict] || "#534AB7";
+
+  resultBox.innerHTML = `
+    <div style="border-left:3px solid ${verdictColor};padding:12px 16px;background:#fafafa;border-radius:8px;">
+      <div style="font-weight:600;margin-bottom:4px;">${result.product_name} — ₹${result.proposed_price.toLocaleString('en-IN')}</div>
+      <div style="color:#444;font-size:14px;">${result.message}</div>
+      <div style="margin-top:8px;font-size:12px;color:#888;">Cheapest month: <strong>${result.cheapest_month}</strong> · Priciest month: <strong>${result.priciest_month}</strong></div>
+    </div>
+  `;
+}
+
+async function renderOwnerAnalytics() {
+  populateOwnerProductSelect();
+  const grid = document.getElementById("owner-grid");
+  grid.innerHTML = `<div style="padding:20px;color:#999">Crunching seasonal data...</div>`;
+
+  const analysis = await loadSeasonalAnalysis();
+  if (!analysis || !analysis.length) {
+    grid.innerHTML = `<div style="padding:20px;color:#c0392b">Seasonal analysis unavailable — backend may be waking up, try again in a moment.</div>`;
+    return;
+  }
+  ownerAnalyticsLoaded = true;
+
+  grid.innerHTML = analysis.map(a => {
+    const months = Object.keys(a.monthly_avg_best_price);
+    const sparkVals = months.map(m => a.monthly_avg_best_price[m]);
+    const max = Math.max(...sparkVals), min = Math.min(...sparkVals);
+    const bars = months.map((m, i) => {
+      const v = sparkVals[i];
+      const heightPct = max === min ? 50 : Math.round(((v - min) / (max - min)) * 70 + 15);
+      const isCheap = m === a.cheapest_month;
+      const isPricey = m === a.priciest_month;
+      const color = isCheap ? "#0F6E56" : isPricey ? "#B33636" : "#C9D6E3";
+      return `<div title="${m}: ₹${v.toLocaleString('en-IN')}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;">
+        <div style="width:100%;background:${color};height:${heightPct}px;border-radius:2px;"></div>
+        <span style="font-size:9px;color:#999;">${m}</span>
+      </div>`;
+    }).join("");
+
+    return `
+      <div class="history-card">
+        <div class="hcard-title">${a.product_name}</div>
+        <div class="hcard-sub">Avg best price by month (₹${a.overall_avg_price.toLocaleString('en-IN')} overall avg)</div>
+        <div style="display:flex;align-items:flex-end;gap:3px;height:90px;margin:14px 0 6px;">${bars}</div>
+        <div class="hcard-stats">
+          <div><div class="hcard-stat-label">Cheapest</div><div class="hcard-stat-val green">${a.cheapest_month}</div></div>
+          <div><div class="hcard-stat-label">Priciest</div><div class="hcard-stat-val red">${a.priciest_month}</div></div>
+          <div><div class="hcard-stat-label">Swing</div><div class="hcard-stat-val">${a.seasonal_dip_pct}%</div></div>
+        </div>
+        <div class="hcard-ai purple">${a.strategy_note}</div>
+      </div>
+    `;
+  }).join("");
 }
 
 // ── Init ──
