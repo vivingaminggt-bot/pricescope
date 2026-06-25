@@ -52,7 +52,7 @@ function mapBackendProduct(item) {
 async function loadLiveProducts() {
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
+    const timeout = setTimeout(() => controller.abort(), 25000); // allow for Render cold start
 
     const res = await fetch(`${API_BASE}/prices/`, { signal: controller.signal });
     clearTimeout(timeout);
