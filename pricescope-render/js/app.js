@@ -417,10 +417,24 @@ function updateTimestamp() {
 // ── Owner Analytics Tab (internal-only) ──
 let ownerAnalyticsLoaded = false;
 
-function populateOwnerProductSelect() {
+async function populateOwnerProductSelect() {
   const sel = document.getElementById("owner-price-product");
   if (!sel) return;
-  sel.innerHTML = PRODUCTS.map(p => `<option value="${p.id || ''}">${p.name}</option>`).join("");
+  sel.innerHTML = `<option>Loading products...</option>`;
+
+  try {
+    const res = await fetch(`${API_BASE}/products/`);
+    if (!res.ok) throw new Error("Bad response");
+    const data = await res.json();
+    if (Array.isArray(data.products) && data.products.length) {
+      sel.innerHTML = data.products.map(p => `<option value="${p.id}">${p.name}</option>`).join("");
+      return;
+    }
+    throw new Error("Empty product list");
+  } catch (err) {
+    console.warn("Owner product dropdown: backend unavailable, retry needed", err);
+    sel.innerHTML = `<option value="">Backend unavailable — try again in a moment</option>`;
+  }
 }
 
 async function checkOwnerPrice() {
