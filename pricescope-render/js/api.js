@@ -102,7 +102,29 @@ async function loadLiveAlerts() {
   }
 }
 
-// Loads 1-year history for a single product id from the backend.
+// Sends a proposed price for one product to the backend and returns the
+// AI verdict comparing it to that product's seasonal pricing pattern.
+async function evaluateOwnerPrice(productId, price) {
+  try {
+    const res = await fetch(`${API_BASE}/seasonal/${productId}/evaluate?price=${encodeURIComponent(price)}`);
+    if (!res.ok) throw new Error("Bad response");
+    return await res.json();
+  } catch (err) {
+    console.warn("Price evaluation failed:", err);
+    return null;
+  }
+}
+async function loadSeasonalAnalysis() {
+  try {
+    const res = await fetch(`${API_BASE}/seasonal/`);
+    if (!res.ok) throw new Error("Bad response");
+    const data = await res.json();
+    return data.analysis; // [{product_name, monthly_avg_best_price, cheapest_month, ...}]
+  } catch (err) {
+    console.warn("Seasonal analysis unavailable:", err);
+    return null;
+  }
+}
 async function loadLiveHistory(productId) {
   try {
     const res = await fetch(`${API_BASE}/history/${productId}`);
